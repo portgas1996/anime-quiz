@@ -1,38 +1,41 @@
-<<<<<<< HEAD
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Викторина по аниме</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
       background-color: #f0f0f0;
+      overflow-y: auto; /* Разрешить прокрутку по вертикали */
     }
     .quiz-container {
       background: white;
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 400px;
+      max-width: 95%; /* Адаптивная ширина */
       width: 100%;
+      box-sizing: border-box;
+      margin: 10px auto; /* Центрирование с отступами */
       text-align: center;
     }
     .question {
-      font-size: 1.2em;
-      margin-bottom: 20px;
+      font-size: 1.1em;
+      margin-bottom: 15px;
+      word-wrap: break-word; /* Перенос длинных текстов */
     }
     .options {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
     .option {
       padding: 10px;
@@ -40,16 +43,17 @@
       border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s;
+      word-wrap: break-word; /* Перенос длинных текстов */
     }
     .option:hover {
       background: #d0d0d0;
     }
     .result {
-      margin-top: 20px;
+      margin-top: 15px;
       font-weight: bold;
     }
     button {
-      margin-top: 20px;
+      margin-top: 15px;
       padding: 10px 20px;
       background: #1e90ff;
       color: white;
@@ -59,6 +63,24 @@
     }
     button:hover {
       background: #1c86ee;
+    }
+    /* Адаптивность для маленьких экранов */
+    @media (max-width: 600px) {
+      .quiz-container {
+        padding: 10px;
+        margin: 5px;
+      }
+      .question {
+        font-size: 0.9em;
+      }
+      .option {
+        font-size: 0.85em;
+        padding: 8px;
+      }
+      button {
+        padding: 8px 15px;
+        font-size: 0.9em;
+      }
     }
   </style>
 </head>
@@ -145,152 +167,5 @@
     };
   </script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Викторина по аниме</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f0f0f0;
-    }
-    .quiz-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-    }
-    .question {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-    }
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .option {
-      padding: 10px;
-      background: #e0e0e0;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .option:hover {
-      background: #d0d0d0;
-    }
-    .result {
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #1e90ff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1c86ee;
-    }
-  </style>
-</head>
-<body>
-  <div class="quiz-container">
-    <div class="question" id="question"></div>
-    <div class="options" id="options"></div>
-    <div class="result" id="result"></div>
-    <button id="nextBtn" style="display: none;">Следующий вопрос</button>
-  </div>
-
-  <script>
-    const questions = [
-      {
-        question: "Как зовут главного героя аниме 'Наруто'?",
-        options: ["Саске Учиха", "Наруто Узумаки", "Какаши Хатаке", "Сакура Харуно"],
-        correct: 1
-      },
-      {
-        question: "В каком аниме фигурирует Тетрадь Смерти?",
-        options: ["Тетрадь Смерти", "Атака титанов", "Стальной алхимик", "Ван Пис"],
-        correct: 0
-      },
-      {
-        question: "Кто является капитаном команды Карасуно в 'Волейбол!!'?",
-        options: ["Хината Шоё", "Кагеяма Тобио", "Дайчи Савамура", "Нишинойя Ю"],
-        correct: 2
-      }
-    ];
-
-    let currentQuestion = 0;
-    let score = 0;
-
-    function loadQuestion() {
-      const q = questions[currentQuestion];
-      document.getElementById('question').innerText = q.question;
-      const optionsDiv = document.getElementById('options');
-      optionsDiv.innerHTML = '';
-      q.options.forEach((option, index) => {
-        const optionEl = document.createElement('div');
-        optionEl.className = 'option';
-        optionEl.innerText = option;
-        optionEl.onclick = () => checkAnswer(index);
-        optionsDiv.appendChild(optionEl);
-      });
-      document.getElementById('result').innerText = '';
-      document.getElementById('nextBtn').style.display = 'none';
-    }
-
-    function checkAnswer(selected) {
-      const q = questions[currentQuestion];
-      const resultDiv = document.getElementById('result');
-      if (selected === q.correct) {
-        resultDiv.innerText = 'Правильно!';
-        score++;
-      } else {
-        resultDiv.innerText = `Неправильно! Правильный ответ: ${q.options[q.correct]}`;
-      }
-      document.getElementById('nextBtn').style.display = 'block';
-      document.querySelectorAll('.option').forEach(opt => opt.style.pointerEvents = 'none');
-    }
-
-    document.getElementById('nextBtn').onclick = () => {
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        loadQuestion();
-      } else {
-        document.getElementById('question').innerText = 'Викторина завершена!';
-        document.getElementById('options').innerHTML = '';
-        document.getElementById('result').innerText = `Ваш результат: ${score} из ${questions.length}`;
-        document.getElementById('nextBtn').style.display = 'none';
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.sendData(JSON.stringify({ score, total: questions.length }));
-        }
-      }
-    };
-
-    window.onload = () => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-      }
-      loadQuestion();
-    };
-  </script>
-</body>
->>>>>>> 1e61374ad213d4a4d9d9136e5819a12f928aad01
 </html>
+```
