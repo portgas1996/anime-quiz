@@ -3,552 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Аниме Викторина — Играй прямо в Telegram</title>
-
-  <!-- Простой шрифт -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+  <title>Аниме Викторина</title>
   <style>
-    :root{
-      --bg1:#6b21a8;
-      --bg2:#ec4899;
-      --card: rgba(255,255,255,0.06);
-      --accent: #ffd166;
-      --accent-2:#ffb86b;
-      --glass: rgba(255,255,255,0.06);
-      --text: #ffffff;
-      --muted: rgba(255,255,255,0.75);
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    html,body{height:100%;margin:0;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);-webkit-font-smoothing:antialiased}
-    .app {
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
-    }
-
-    .shell {
-      width:100%;
-      max-width:960px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border-radius:20px;
-      padding:20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:18px;
-      align-items:center;
-    }
-
-    /* Left column - quiz */
-    .panel{
-      padding:22px;
-    }
-    .brand {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:10px;
-    }
-    .logo {
-      width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-      font-size:20px;
-    }
-    .title { font-size:20px;font-weight:700; letter-spacing:0.4px; }
-    .subtitle { font-size:12px;color:var(--muted); margin-top:4px }
-
-    .card {
-      background:var(--card);
-      border-radius:14px;
-      padding:18px;
-      margin-top:14px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
-    }
-
-    .question-text { font-size:18px;font-weight:600; margin-bottom:12px; }
-    .question-meta {font-size:12px;color:var(--muted); margin-bottom:12px}
-
+    body { margin:0; font-family:Arial, sans-serif; background:#1f2937; color:white; }
+    .app { max-width:700px; margin:auto; padding:20px; }
+    .card { background:#374151; border-radius:10px; padding:16px; margin:12px 0; }
+    .question-text { font-size:18px; font-weight:bold; margin-bottom:10px; }
     .options { display:grid; gap:10px; }
-    .opt {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      padding:14px;
-      border-radius:12px;
-      cursor:pointer;
-      border:2px solid transparent;
-      transition: transform .12s ease, box-shadow .12s ease, border-color .12s;
-      user-select:none;
-    }
-    .opt:hover{ transform:translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
-    .opt.selected { border-color: rgba(255,255,255,0.12); }
-    .opt.correct { background: linear-gradient(90deg, rgba(20,160,80,0.16), rgba(20,160,80,0.08)); border-color: rgba(20,160,80,0.32); }
-    .opt.wrong { background: linear-gradient(90deg, rgba(220,50,50,0.12), rgba(220,50,50,0.05)); border-color: rgba(220,50,50,0.28); opacity:0.95; }
-
-    .bottom-row { display:flex; gap:10px; align-items:center; margin-top:14px; justify-content:space-between; }
-    .btn {
-      background:linear-gradient(90deg,var(--accent),var(--accent-2));
-      color:#111;
-      border:none;
-      padding:10px 16px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:700;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-    }
-    .btn.secondary { background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.06); font-weight:600; }
-
-    .timer {
-      display:flex;align-items:center;gap:8px;font-weight:700;color:var(--muted);
-      background: rgba(255,255,255,0.02);
-      padding:8px 12px;border-radius:10px;font-size:14px;
-    }
-
-    /* Right column - preview / avatar */
-    .side {
-      padding:22px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      align-items:center;
-      justify-content:center;
-    }
-    .banner {
-      width:100%;
-      height:200px;
-      border-radius:12px;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-      display:flex;align-items:center;justify-content:center;
-      font-weight:800;font-size:20px;color:white;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    }
-    .avatar-preview { width:100%; height:120px; border-radius:10px; overflow:hidden; background:#fff; display:flex; align-items:center; justify-content:center; color:#222 }
-
-    .stats { display:flex; gap:8px; width:100%; justify-content:space-between; font-size:13px; color:var(--muted) }
-
-    /* responsive */
-    @media(max-width:900px){
-      .shell { grid-template-columns: 1fr; padding:12px; }
-      .side { order:-1; }
-    }
+    .opt { background:#4b5563; padding:10px; border-radius:8px; cursor:pointer; }
+    .opt.correct { background:rgba(0,200,100,0.6); }
+    .opt.wrong { background:rgba(200,0,0,0.6); }
+    button { cursor:pointer; padding:10px 16px; border:none; border-radius:6px; margin:4px; }
+    .btn-main { background:#facc15; color:black; font-weight:bold; }
+    .btn-sec { background:#6b7280; color:white; }
+    #leaderboard { margin-top:20px; }
+    #leadersList { padding-left:20px; }
+    input { padding:8px; border-radius:6px; border:none; margin:8px 0; width:60%; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="shell" role="application" aria-label="Аниме викторина">
-      <div class="panel">
-        <div class="brand">
-          <div class="logo">АВ</div>
-          <div>
-            <div class="title">Аниме Викторина</div>
-            <div class="subtitle">Тестируй знания, соревнуйся с друзьями</div>
-          </div>
-        </div>
+<div class="app">
+  <h1>🎌 Аниме Викторина</h1>
 
-        <div id="main-card" class="card" aria-live="polite">
-          <div id="question-area">
-            <!-- dynamic content -->
-          </div>
-          <div class="bottom-row">
-            <div class="timer" id="timer">⏱ 15</div>
-            <div style="margin-left:auto; display:flex; gap:8px;">
-              <button id="skipBtn" class="btn secondary">Пропустить</button>
-              <button id="nextBtn" class="btn">Следующий</button>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px; display:flex; gap:8px;">
-          <button id="restartBtn" class="btn secondary">Сбросить</button>
-          <button id="sendScoreBtn" class="btn" style="margin-left:auto">Отправить результат в бот</button>
-        </div>
-      </div>
-
-      <div class="side">
-        <div class="banner">🎌 Аниме — проверь себя</div>
-        <div class="avatar-preview" id="avatarPreview">
-          <!-- we'll draw avatar here (image or text) -->
-          <img id="avatarImg" src="" alt="аватар" style="max-width:100%; max-height:100%; display:none" />
-          <div id="avatarPlaceholder" style="font-weight:700; font-size:18px;">Аниме Викторина</div>
-        </div>
-        <div class="stats">
-          <div>Вопросов: <span id="totalQ">0</span></div>
-          <div>Очки: <span id="score">0</span></div>
-          <div>Точность: <span id="accuracy">0%</span></div>
-        </div>
-      </div>
+  <div id="game" class="card">
+    <div id="question-area"></div>
+    <div style="margin-top:12px;">
+      <button id="nextBtn" class="btn-main">Следующий</button>
+      <button id="restartBtn" class="btn-sec">Сбросить</button>
     </div>
   </div>
 
+  <div id="finishForm" class="card" style="display:none;">
+    <h3>🎉 Игра окончена!</h3>
+    <p>Ты набрал <span id="finalScore"></span> очков.</p>
+    <input type="text" id="playerName" placeholder="Твой ник">
+    <button onclick="submitScore()" class="btn-main">Отправить результат</button>
+  </div>
+
+  <div id="leaderboard" class="card">
+    <h3>🏆 Лидеры</h3>
+    <ol id="leadersList"><li>Загрузка...</li></ol>
+  </div>
+</div>
+
 <script>
-/*
-  Simple Quiz WebApp (single-file)
-  Features:
-  - questions with optional images
-  - per-question timer
-  - transitions and feedback (correct/wrong)
-  - "send result to bot" via Telegram.WebApp.sendData if opened inside Telegram
-  - works as static page (no build)
-*/
+let QUESTIONS = [];
+let idx=0, score=0, answered=false;
 
-/* --------------------------
-   Questions: Add/modify here
-   If you add image, use a full URL or place image in repo and reference relative path
-   -------------------------- */
-const QUESTIONS = [
-  {
-    id:1,
-    question: "Кто главный герой в 'Naruto'?",
-    options: ["Саске", "Наруто", "Какаши", "Сакура"],
-    correct: 1,
-    anime: "Naruto",
-    image: "" // optional, e.g. "img/naruto.png"
-  },
-  {
-    id:2,
-    question: "В каком аниме есть Тетрадь Смерти?",
-    options: ["Naruto", "Bleach", "Death Note", "One Piece"],
-    correct: 2,
-    anime: "Death Note",
-    image: ""
-  },
-  {
-    id:3,
-    question: "Как зовут капитана Пиратов Соломенной Шляпы?",
-    options: ["Зоро", "Луффи", "Санджи", "Шанкс"],
-    correct: 1,
-    anime: "One Piece",
-    image: ""
-  },
-  {
-    id:4,
-    question: "Угадай по силу - кто носит тёмную мантию и использует баккан?",
-    options: ["Эдвард Элрик", "Лайт Ягами", "Ичиго Куросаки", "Киллуа Золдик"],
-    correct: 2,
-    anime: "Death Note",
-    image: ""
-  }
-];
-
-/* --------------------------
-   Config
-   -------------------------- */
-const TIME_PER_QUESTION = 15; // seconds
-
-/* --------------------------
-   App state
-   -------------------------- */
-let state = {
-  idx: 0,
-  score: 0,
-  answered: false,
-  selected: null,
-  remaining: TIME_PER_QUESTION,
-  timerId: null,
-  questions: shuffle([...QUESTIONS])
-};
-
-/* Utils */
-function $(id){ return document.getElementById(id); }
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
-  return a;
+// Загружаем вопросы из JSON
+async function loadQuestions(){
+  const res = await fetch("questions.json");
+  QUESTIONS = await res.json();
+  renderQuestion();
 }
 
-/* Render functions */
+// Рендерим вопрос
 function renderQuestion(){
-  const q = state.questions[state.idx];
-  $('totalQ').innerText = state.questions.length;
-  $('score').innerText = state.score;
-  $('accuracy').innerText = computeAccuracy();
-
-  const container = $('question-area');
-  container.innerHTML = '';
-
-  const qText = document.createElement('div');
-  qText.className = 'question-text';
-  qText.innerText = q ? q.question : 'Викторина завершена';
-  container.appendChild(qText);
-
-  if(q && q.image){
-    const img = document.createElement('img');
-    img.src = q.image;
-    img.alt = 'изображение вопроса';
-    img.style.maxWidth = '100%';
-    img.style.borderRadius = '10px';
-    img.style.margin = '8px 0';
-    container.appendChild(img);
-  }
-
-  if(!q){
-    // finished view
-    const finished = document.createElement('div');
-    finished.style.marginTop='12px';
-    finished.innerHTML = `
-      <div style="font-weight:700; font-size:18px; margin-bottom:8px">🎉 Игра окончена!</div>
-      <div style="color:var(--muted)">Твой результат: <strong>${state.score}</strong> из ${state.questions.length}</div>
-    `;
-    container.appendChild(finished);
-    $('nextBtn').innerText = 'Начать заново';
-    $('skipBtn').style.display='none';
-    stopTimer();
+  const area=document.getElementById("question-area");
+  area.innerHTML="";
+  if(idx>=QUESTIONS.length){
+    document.getElementById("game").style.display="none";
+    document.getElementById("finishForm").style.display="block";
+    document.getElementById("finalScore").innerText=`${score}/${QUESTIONS.length}`;
     return;
   }
-
-  // options
-  const opts = document.createElement('div');
-  opts.className = 'options';
-  q.options.forEach((optText, i) => {
-    const el = document.createElement('div');
-    el.className = 'opt';
-    el.setAttribute('role','button');
-    el.setAttribute('tabindex','0');
-    el.dataset.index = i;
-    el.innerText = optText;
-
-    // click handler
-    el.addEventListener('click', () => selectOption(i));
-    el.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' || e.key === ' ') selectOption(i);
-    });
-
+  const q=QUESTIONS[idx];
+  const qt=document.createElement("div");
+  qt.className="question-text"; qt.innerText=q.question;
+  area.appendChild(qt);
+  const opts=document.createElement("div"); opts.className="options";
+  q.options.forEach((opt,i)=>{
+    const el=document.createElement("div"); el.className="opt"; el.innerText=opt;
+    el.onclick=()=>selectOption(i);
     opts.appendChild(el);
   });
-
-  container.appendChild(opts);
-
-  // update controls
-  $('nextBtn').innerText = 'Ответить';
-  $('skipBtn').style.display = 'inline-block';
-  state.answered = false;
-  state.selected = null;
-  state.remaining = TIME_PER_QUESTION;
-  $('timer').innerText = `⏱ ${state.remaining}`;
-  startTimer();
+  area.appendChild(opts);
+  answered=false;
 }
 
-/* Timer */
-function startTimer(){
-  stopTimer();
-  state.timerId = setInterval(() => {
-    state.remaining--;
-    $('timer').innerText = `⏱ ${state.remaining}`;
-    if(state.remaining <= 0){
-      stopTimer();
-      // auto-mark as skipped/wrong
-      handleTimeout();
-    }
-  }, 1000);
-}
-
-function stopTimer(){
-  if(state.timerId){ clearInterval(state.timerId); state.timerId = null; }
-}
-
-/* Actions */
+// Обработка ответа
 function selectOption(i){
-  if(state.answered) return;
-  state.selected = i;
-  // highlight selected
-  document.querySelectorAll('.opt').forEach(el => el.classList.remove('selected'));
-  const node = document.querySelector(`.opt[data-index="${i}"]`);
-  if(node) node.classList.add('selected');
-
-  // auto-submit immediately
-  submitAnswer();
-}
-
-function submitAnswer(){
-  if(state.answered) return;
-  const q = state.questions[state.idx];
-  state.answered = true;
-  stopTimer();
-
-  // find option nodes
-  const nodes = document.querySelectorAll('.opt');
-  nodes.forEach((n) => {
-    const idx = Number(n.dataset.index);
-    n.classList.remove('selected');
-    if(idx === q.correct){
-      n.classList.add('correct');
-    } else if(idx === state.selected){
-      n.classList.add('wrong');
-    } else {
-      // dim
-      n.style.opacity = 0.9;
-    }
+  if(answered) return; answered=true;
+  const q=QUESTIONS[idx];
+  const opts=document.querySelectorAll(".opt");
+  opts.forEach((el,j)=>{
+    if(j===q.correct) el.classList.add("correct");
+    if(j===i && i!==q.correct) el.classList.add("wrong");
   });
-
-  if(state.selected === q.correct){
-    state.score++;
-  }
-
-  // update stats
-  $('score').innerText = state.score;
-  $('accuracy').innerText = computeAccuracy();
-
-  // adjust buttons
-  $('nextBtn').innerText = (state.idx + 1 < state.questions.length) ? 'Далее' : 'Завершить';
-  // automatically go next after short delay
-  setTimeout(() => {
-    // show next question or finish
-  }, 800);
+  if(i===q.correct) score++;
 }
 
-function handleTimeout(){
-  // when time runs out, mark wrong and reveal correct
-  state.selected = null;
-  submitAnswer();
-}
+// Кнопки
+document.getElementById("nextBtn").onclick=()=>{ if(answered){ idx++; renderQuestion(); } };
+document.getElementById("restartBtn").onclick=()=>{ idx=0; score=0; renderQuestion(); document.getElementById("game").style.display="block"; document.getElementById("finishForm").style.display="none"; };
 
-function nextQuestion(){
-  if(!state.questions[state.idx]) {
-    // restart
-    restartQuiz();
-    return;
-  }
-  // if current unanswered, treat as skip
-  if(!state.answered){
-    state.selected = null;
-    submitAnswer();
-    // then move on
-  }
-  if(state.idx +1 < state.questions.length){
-    state.idx++;
-    renderQuestion();
-  } else {
-    // finished
-    state.idx = state.questions.length; // sentinel
-    renderQuestion();
-  }
-}
-
-function skipQuestion(){
-  if(state.answered){
-    // allow skip to next after answered
-    nextQuestion();
-    return;
-  }
-  // mark as skipped (no score) and move on
-  stopTimer();
-  state.selected = null;
-  state.answered = true;
-  // show correct answer briefly
-  const q = state.questions[state.idx];
-  document.querySelectorAll('.opt').forEach((n)=>{
-    if(Number(n.dataset.index) === q.correct) n.classList.add('correct');
-  });
-  setTimeout(() => nextQuestion(), 700);
-}
-
-function restartQuiz(){
-  state.questions = shuffle([...QUESTIONS]);
-  state.idx = 0;
-  state.score = 0;
-  renderQuestion();
-}
-
-/* Stats helper */
-function computeAccuracy(){
-  const attempted = Math.min(state.idx + (state.answered?1:0), state.questions.length);
-  if(attempted === 0) return '0%';
-  const perc = Math.round((state.score / attempted)*100);
-  return perc + '%';
-}
-
-/* Avatar preview (simple generation) */
-function generateAvatarPreview(){
-  // If you have an asset, set avatarImg.src to it and show.
-  // For demo, we draw a simple SVG inline image.
-  const avatarImg = $('avatarImg');
-  const placeholder = $('avatarPlaceholder');
-
-  // optional: if you have a dedicated image in repo, uncomment:
-  // avatarImg.src = 'assets/avatar-640x360.png';
-  // avatarImg.style.display = 'block';
-  // placeholder.style.display = 'none';
-
-  // for now keep placeholder visible
-}
-
-/* Telegram WebApp integration */
-function isTelegram() {
-  return typeof window.Telegram !== 'undefined' || typeof window.TelegramWebApp !== 'undefined';
-}
-function sendScoreToBot(){
-  // If running inside Telegram webview, send via Telegram.WebApp.sendData
-  // Otherwise, copy text to clipboard as fallback.
-  const payload = {
-    score: state.score,
-    total: state.questions.length,
-    correct: state.score,
-    timestamp: new Date().toISOString()
-  };
-  const json = JSON.stringify(payload);
-
-  if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData){
-    try{
-      window.Telegram.WebApp.sendData(json);
-      alert('Результат отправлен в бот!');
-    }catch(err){
-      console.error(err);
-      alert('Ошибка отправки в бот');
-    }
-  } else if(window.TelegramWebApp && window.TelegramWebApp.sendData){
-    try{
-      window.TelegramWebApp.sendData(json);
-      alert('Результат отправлен в бот!');
-    }catch(err){
-      console.error(err);
-      alert('Ошибка отправки в бот');
-    }
-  } else {
-    // fallback: copy to clipboard
-    navigator.clipboard?.writeText(json).then(()=>{
-      alert('Не в Telegram: результат скопирован в буфер обмена. Вставь его в чат с ботом.');
-    }).catch(()=> {
-      alert('Не удалось скопировать результат. Вот он:\n' + json);
-    });
-  }
-}
-
-/* Setup UI bindings */
-document.addEventListener('DOMContentLoaded', ()=>{
-  $('nextBtn').addEventListener('click', ()=>{
-    if(!state.answered){
-      // if not answered, clicking "Ответить" behaves like skip to next (we already auto-submit on select)
-      // but if no selection was made, treat as skip
-      if(state.selected === null){
-        skipQuestion();
-      }
-    } else {
-      nextQuestion();
-    }
-  });
-
-  $('skipBtn').addEventListener('click', () => skipQuestion());
-  $('restartBtn').addEventListener('click', () => {
-    if(confirm('Начать заново?')) restartQuiz();
-  });
-  $('sendScoreBtn').addEventListener('click', sendScoreToBot);
-
-  generateAvatarPreview();
-  renderQuestion();
-
-  // If opened inside Telegram WebApp, try to expand/heights
+// ------------------- ЛИДЕРЫ -------------------
+async function loadLeaders(){
   try{
-    const t = window.Telegram?.WebApp || window.TelegramWebApp;
-    if(t){
-      // optional: set background color to transparent
-      t.expand(); // try to expand view
-    }
-  }catch(e){ /* ignore */ }
-});
+    const res=await fetch("https://YOUR_BACKEND_URL/leaders");
+    const data=await res.json();
+    const list=document.getElementById("leadersList"); list.innerHTML="";
+    data.forEach((row,i)=>{
+      const li=document.createElement("li");
+      li.innerText=`${i+1}. ${row.name} — ${row.score}/${row.total}`;
+      list.appendChild(li);
+    });
+  }catch(e){ console.error(e); }
+}
+
+async function submitScore(){
+  const name=document.getElementById("playerName").value||"Аноним";
+  try{
+    await fetch("https://YOUR_BACKEND_URL/score",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,score,total:QUESTIONS.length})
+    });
+    loadLeaders();
+    alert("Результат отправлен!");
+  }catch(e){ alert("Ошибка отправки"); }
+}
+
+// ------------------- СТАРТ -------------------
+loadQuestions();
+loadLeaders();
 </script>
 </body>
 </html>
