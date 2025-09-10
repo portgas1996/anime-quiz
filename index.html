@@ -85,7 +85,7 @@ document.getElementById("restartBtn").onclick=()=>{ idx=0; score=0; renderQuesti
 // ------------------- ЛИДЕРЫ -------------------
 async function loadLeaders(){
   try{
-    const res=await fetch("https://YOUR_BACKEND_URL/leaders");
+    const res=await fetch("https://anime-quiz-backend-2ien.onrender.com");
     const data=await res.json();
     const list=document.getElementById("leadersList"); list.innerHTML="";
     data.forEach((row,i)=>{
@@ -99,7 +99,7 @@ async function loadLeaders(){
 async function submitScore(){
   const name=document.getElementById("playerName").value||"Аноним";
   try{
-    await fetch("https://YOUR_BACKEND_URL/score",{
+    await fetch("https://anime-quiz-backend-2ien.onrender.com",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({name,score,total:QUESTIONS.length})
