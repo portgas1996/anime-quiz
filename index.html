@@ -1,113 +1,270 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Anime Quiz</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Аниме Викторина</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="quiz-container">
-    <h1>Anime Quiz</h1>
-    <div id="quiz"></div>
-    <button id="nextBtn" style="display:none;">Дальше</button>
-    <div id="result"></div>
-    <div id="leaderboard">
-      <h2>Лидеры</h2>
-      <table>
-        <thead><tr><th>#</th><th>Игрок</th><th>Счёт</th></tr></thead>
-        <tbody id="leadersBody"></tbody>
-      </table>
+<div class="app">
+  <h1>🎌 Аниме Викторина</h1>
+
+  <div id="game" class="card">
+    <div id="question-area"></div>
+    <div style="margin-top:12px;">
+      <button id="nextBtn" class="btn-main">Следующий</button>
+      <button id="restartBtn" class="btn-sec">Сбросить</button>
     </div>
   </div>
 
-  <canvas id="posterCanvas" width="600" height="900" style="display:none;"></canvas>
-  <button id="posterBtn" style="display:none;">Получить постер</button>
+  <div id="finishForm" class="card" style="display:none;">
+    <h3>🎉 Игра окончена!</h3>
+    <p>Ты набрал <span id="finalScore"></span> очков.</p>
+    <input type="text" id="playerName" placeholder="Твой ник">
+    <button id="sendScoreBtn" class="btn-main">Отправить результат</button>
 
-  <script src="poster.js"></script>
-  <script>
-  let QUESTIONS = [];
-  let currentQuestion = 0;
-  let score = 0;
-  let playerName = "Pirate";
+    <!-- Кнопка генерации/скачивания постера -->
+    <div style="margin-top:12px;">
+      <button id="posterBtn" class="btn-main" style="display:none;">Получить постер</button>
+    </div>
+  </div>
 
-  const quizEl = document.getElementById("quiz");
-  const nextBtn = document.getElementById("nextBtn");
-  const resultEl = document.getElementById("result");
+  <div id="leaderboard" class="card">
+    <h3>🏆 Лидеры</h3>
+    <ol id="leadersList"><li>Загрузка...</li></ol>
+  </div>
 
-  async function loadQuestions() {
+  <!-- Canvas для постера (по умолчанию скрыт) -->
+  <canvas id="posterCanvas" width="640" height="960" style="display:none; margin-top:12px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35);"></canvas>
+</div>
+
+<script>
+let QUESTIONS = [];
+let idx=0, score=0, answered=false;
+
+// Загружаем вопросы из JSON
+async function loadQuestions(){
+  try {
     const res = await fetch("questions.json");
     QUESTIONS = await res.json();
-    showQuestion();
+    renderQuestion();
+  } catch(e) {
+    console.error("Ошибка загрузки questions.json:", e);
+    document.getElementById("question-area").innerHTML = "<p>Ошибка загрузки вопросов.</p>";
   }
+}
 
-  function showQuestion() {
-    if (currentQuestion >= QUESTIONS.length) {
-      endGame();
+// Рендерим вопрос
+function renderQuestion(){
+  const area=document.getElementById("question-area");
+  area.innerHTML="";
+  if(idx>=QUESTIONS.length){
+    document.getElementById("game").style.display="none";
+    document.getElementById("finishForm").style.display="block";
+    document.getElementById("finalScore").innerText=`${score}/${QUESTIONS.length}`;
+    return;
+  }
+  const q=QUESTIONS[idx];
+  const qt=document.createElement("div");
+  qt.className="question-text"; qt.innerText=q.question;
+  area.appendChild(qt);
+  const opts=document.createElement("div"); opts.className="options";
+  q.options.forEach((opt,i)=>{
+    const el=document.createElement("div"); el.className="opt"; el.innerText=opt;
+    el.onclick=()=>selectOption(i);
+    opts.appendChild(el);
+  });
+  area.appendChild(opts);
+  answered=false;
+}
+
+// Обработка ответа
+function selectOption(i){
+  if(answered) return; answered=true;
+  const q=QUESTIONS[idx];
+  const opts=document.querySelectorAll(".opt");
+  opts.forEach((el,j)=>{
+    if(j===q.correct) el.classList.add("correct");
+    if(j===i && i!==q.correct) el.classList.add("wrong");
+  });
+  if(i===q.correct) score++;
+}
+
+// Кнопки
+document.getElementById("nextBtn").onclick=()=>{ if(answered){ idx++; renderQuestion(); } };
+document.getElementById("restartBtn").onclick=()=>{ idx=0; score=0; renderQuestion(); document.getElementById("game").style.display="block"; document.getElementById("finishForm").style.display="none"; };
+
+// ------------------- ЛИДЕРЫ -------------------
+async function loadLeaders(){
+  try{
+    const res=await fetch("https://anime-quiz-backend-2ien.onrender.com");
+    const data=await res.json();
+    const list=document.getElementById("leadersList"); list.innerHTML="";
+    if(!Array.isArray(data) || data.length===0){
+      list.innerHTML = "<li>Пока нет результатов</li>";
       return;
     }
-    const q = QUESTIONS[currentQuestion];
-    quizEl.innerHTML = `
-      <h3>${q.question}</h3>
-      <ul>
-        ${q.answers.map((a,i)=>`<li><button onclick="checkAnswer(${i})">${a}</button></li>`).join("")}
-      </ul>
-    `;
-  }
+    data.forEach((row,i)=>{
+      const li=document.createElement("li");
+      li.innerText=`${i+1}. ${row.name} — ${row.score}/${row.total}`;
+      list.appendChild(li);
+    });
+  }catch(e){ console.error("Ошибка загрузки лидеров:", e); document.getElementById("leadersList").innerHTML = "<li>Ошибка загрузки</li>"; }
+}
 
-  function checkAnswer(i) {
-    const q = QUESTIONS[currentQuestion];
-    if (i === q.correct) score++;
-    currentQuestion++;
-    nextBtn.style.display = "inline-block";
-  }
-
-  nextBtn.onclick = () => {
-    nextBtn.style.display = "none";
-    showQuestion();
-  };
-
-  async function endGame() {
-    quizEl.innerHTML = "";
-    resultEl.innerHTML = `Вы набрали ${score} из ${QUESTIONS.length}`;
-    nextBtn.style.display = "none";
-
-    const tg = window.Telegram.WebApp;
-    const user = tg.initDataUnsafe?.user || {};
-    playerName = user.first_name || "Pirate";
-    const photo = user.photo_url || null;
-
-    await fetch("https://anime-quiz-backend-2ien.onrender.com", {
+async function submitScore(){
+  const nameInput = document.getElementById("playerName").value;
+  const name = nameInput && nameInput.trim() ? nameInput.trim() : "Аноним";
+  try{
+    await fetch("https://anime-quiz-backend-2ien.onrender.com",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({name: playerName, score, total: QUESTIONS.length})
+      body:JSON.stringify({name,score,total:QUESTIONS.length})
     });
+    await loadLeaders();
+    alert("Результат отправлен!");
 
-    loadLeaders();
-
-    // вызов генерации постера из poster.js
-    document.getElementById("posterBtn").style.display = "inline-block";
-    generatePoster(playerName, photo, score);
-  }
-
-  async function loadLeaders(){
+    // После успешной отправки — пробуем получить аватар из Telegram (если игра в WebApp)
+    let tgPhoto = null;
     try {
-      const res = await fetch("https://anime-quiz-backend-2ien.onrender.com");
-      const leaders = await res.json();
-      const body = document.getElementById("leadersBody");
-      body.innerHTML = "";
-      leaders.forEach((row,i)=>{
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${i+1}</td><td>${row.name}</td><td>${row.score}/${row.total}</td>`;
-        body.appendChild(tr);
-      });
-    } catch(e) {
-      console.error("Ошибка загрузки лидеров", e);
+      tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || null;
+    } catch(e){ tgPhoto = null; }
+
+    // генерация постера (и отображение кнопки для скачивания)
+    generatePoster(name, tgPhoto, score);
+  }catch(e){
+    console.error(e);
+    alert("Ошибка отправки");
+  }
+}
+
+// повесим кнопку отправки (чтобы input работал)
+document.getElementById("sendScoreBtn").addEventListener("click", submitScore);
+
+// ------------------- POSTER (Canvas) -------------------
+// helper: загрузка изображения (crossOrigin)
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = src;
+  });
+}
+
+/*
+  generatePoster(name, photoUrl, score)
+  - name: строка
+  - photoUrl: ссылка на аватарку (или null)
+  - score: целое число
+*/
+async function generatePoster(name, photoUrl, score){
+  const canvas = document.getElementById("posterCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Очистим холст
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Шаблон постера (положи wanted_template.png рядом с index.html)
+  let bg;
+  try {
+    bg = await loadImage("wanted_template.png");
+  } catch(e){
+    console.warn("Шаблон постера не найден или не доступен:", e);
+    // если нет шаблона - просто заполним фон
+    ctx.fillStyle = "#e9d6b7";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  if(bg) ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+
+  // Координаты и размер для аватарки
+  const avatarX = 170;
+  const avatarY = 210;
+  const avatarSize = 300;
+  // Рисуем аватар в круглой маске
+  try {
+    const avatarSrc = photoUrl || "https://i.ibb.co/7n5T8Ns/avatar-placeholder.png";
+    const avatarImg = await loadImage(avatarSrc);
+
+    // Обрезаем / вписываем аватар в круг
+    const cx = avatarX + avatarSize/2;
+    const cy = avatarY + avatarSize/2;
+    const r = avatarSize/2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    // подогнать соотношение сторон: центрируем изображение
+    // Вычислим масштаб и смещение, чтобы заполнить квадрат avatarSize
+    const ar = avatarImg.width / avatarImg.height;
+    let dw = avatarSize, dh = avatarSize, sx = 0, sy = 0, sw = avatarImg.width, sh = avatarImg.height;
+    if(ar > 1){
+      // шире, чем высокий: обрезаем по бокам
+      sh = avatarImg.height;
+      sw = avatarImg.height * ar;
+      // center crop horizontally
+      sx = (avatarImg.width - avatarImg.height * ar) / 2;
+    } else if(ar < 1){
+      // выше, чем широкий: обрезаем по вертикали
+      sw = avatarImg.width;
+      sh = avatarImg.width / ar;
+      sy = (avatarImg.height - avatarImg.width / ar) / 2;
     }
+    // Нативная drawImage с обрезкой (пытаться избежать искажений)
+    // Если crop параметры не корректны, fallback на простой drawImage
+    try {
+      ctx.drawImage(avatarImg, sx, sy, sw, sh, avatarX, avatarY, avatarSize, avatarSize);
+    } catch(e) {
+      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+    }
+    ctx.restore();
+  } catch(e){
+    console.warn("Не удалось загрузить аватарку:", e);
+    // ничего страшного — шаблон содержит силуэт
   }
 
-  loadQuestions();
-  loadLeaders();
-  </script>
+  // Текст имени
+  ctx.fillStyle = "#111"; // тёмный текст поверх пергамента
+  ctx.font = "bold 36px serif";
+  ctx.textAlign = "center";
+  // подстраиваем размер шрифта при длинном имени
+  let displayName = name || "Аноним";
+  if(displayName.length > 18){
+    ctx.font = "bold 28px serif";
+  }
+  ctx.fillText(displayName, canvas.width/2, 560);
+
+  // Награда (примерная формула)
+  const reward = Math.max(10000, score * 10000); // минимум 10k
+  ctx.font = "bold 34px serif";
+  ctx.fillText(reward.toLocaleString() + " Berries", canvas.width/2, 660);
+
+  // Показываем canvas и кнопку скачивания
+  canvas.style.display = "block";
+  const posterBtn = document.getElementById("posterBtn");
+  posterBtn.style.display = "inline-block";
+  posterBtn.onclick = () => {
+    try {
+      // Скачать изображение
+      const link = document.createElement("a");
+      link.download = `${displayName.replace(/\s+/g,'_')}_wanted.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch(err) {
+      // Если canvas "запятнан" (CORS), сообщаем об этом
+      console.error("Ошибка при экспорте постера:", err);
+      alert("Не удалось скачать постер — возможно, аватарка не позволяет скачивание из-за CORS.");
+    }
+  };
+}
+
+// ------------------- СТАРТ -------------------
+loadQuestions();
+loadLeaders();
+</script>
 </body>
 </html>
