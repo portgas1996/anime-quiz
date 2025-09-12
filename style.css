@@ -1,96 +1,81 @@
-body {
+```css
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
   font-family: Arial, sans-serif;
-  background: #1f2937; /* тёмный фон */
-  color: white;
+  background-color: #f0f0f0;
+  overflow-y: auto;
 }
 
-.app {
-  max-width: 700px;
-  margin: auto;
-  padding: 20px;
-}
-
-.card {
-  background: #374151;
+.quiz-container, .result-container, .leaderboard-container {
+  background: white;
+  padding: 15px;
   border-radius: 10px;
-  padding: 16px;
-  margin: 12px 0;
-}
-
-h1 {
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  max-width: 95%;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px auto;
   text-align: center;
-  font-size: 28px;
-  margin-bottom: 20px;
 }
 
-.question-text {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+.question {
+  font-size: 1.1em;
+  margin-bottom: 15px;
+  word-wrap: break-word;
 }
 
 .options {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.opt {
-  background: #4b5563;
+.option {
   padding: 10px;
-  border-radius: 8px;
+  background: #e0e0e0;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.3s;
+  word-wrap: break-word;
 }
 
-.opt:hover {
-  background: #6b7280;
+.option:hover {
+  background: #d0d0d0;
 }
 
-.opt.correct {
-  background: rgba(0, 200, 100, 0.6);
-}
-
-.opt.wrong {
-  background: rgba(200, 0, 0, 0.6);
+.result {
+  margin-top: 15px;
+  font-weight: bold;
 }
 
 button {
-  cursor: pointer;
-  padding: 10px 16px;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #1e90ff;
+  color: white;
   border: none;
-  border-radius: 6px;
-  margin: 4px;
-  font-weight: bold;
-  transition: opacity 0.2s;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 button:hover {
-  opacity: 0.9;
+  background: #1c86ee;
 }
 
-.btn-main {
-  background: #facc15;
-  color: black;
+@media (max-width: 600px) {
+  .quiz-container, .result-container, .leaderboard-container {
+    padding: 10px;
+    margin: 5px;
+  }
+  .question {
+    font-size: 0.9em;
+  }
+  .option, button {
+    font-size: 0.85em;
+    padding: 8px;
+  }
 }
-
-.btn-sec {
-  background: #6b7280;
-  color: white;
-}
-
-#leaderboard {
-  margin-top: 20px;
-}
-
-#leadersList {
-  padding-left: 20px;
-}
-
-input {
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-  margin: 8px 0;
-  width: 60%;
-}
+```
