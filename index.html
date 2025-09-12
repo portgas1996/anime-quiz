@@ -1,117 +1,113 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Аниме Викторина</title>
+  <meta charset="UTF-8">
+  <title>Anime Quiz</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-  <h1>🎌 Аниме Викторина</h1>
-
-  <div id="game" class="card">
-    <div id="question-area"></div>
-    <div style="margin-top:12px;">
-      <button id="nextBtn" class="btn-main">Следующий</button>
-      <button id="restartBtn" class="btn-sec">Сбросить</button>
+  <div class="quiz-container">
+    <h1>Anime Quiz</h1>
+    <div id="quiz"></div>
+    <button id="nextBtn" style="display:none;">Дальше</button>
+    <div id="result"></div>
+    <div id="leaderboard">
+      <h2>Лидеры</h2>
+      <table>
+        <thead><tr><th>#</th><th>Игрок</th><th>Счёт</th></tr></thead>
+        <tbody id="leadersBody"></tbody>
+      </table>
     </div>
   </div>
 
-  <div id="finishForm" class="card" style="display:none;">
-    <h3>🎉 Игра окончена!</h3>
-    <p>Ты набрал <span id="finalScore"></span> очков.</p>
-    <input type="text" id="playerName" placeholder="Твой ник">
-    <button onclick="submitScore()" class="btn-main">Отправить результат</button>
-  </div>
+  <canvas id="posterCanvas" width="600" height="900" style="display:none;"></canvas>
+  <button id="posterBtn" style="display:none;">Получить постер</button>
 
-  <div id="leaderboard" class="card">
-    <h3>🏆 Лидеры</h3>
-    <ol id="leadersList"><li>Загрузка...</li></ol>
-  </div>
-</div>
+  <script src="poster.js"></script>
+  <script>
+  let QUESTIONS = [];
+  let currentQuestion = 0;
+  let score = 0;
+  let playerName = "Pirate";
 
-<script>
-let QUESTIONS = [];
-let idx=0, score=0, answered=false;
+  const quizEl = document.getElementById("quiz");
+  const nextBtn = document.getElementById("nextBtn");
+  const resultEl = document.getElementById("result");
 
-// Загружаем вопросы из JSON
-async function loadQuestions(){
-  const res = await fetch("questions.json");
-  QUESTIONS = await res.json();
-  renderQuestion();
-}
-
-// Рендерим вопрос
-function renderQuestion(){
-  const area=document.getElementById("question-area");
-  area.innerHTML="";
-  if(idx>=QUESTIONS.length){
-    document.getElementById("game").style.display="none";
-    document.getElementById("finishForm").style.display="block";
-    document.getElementById("finalScore").innerText=`${score}/${QUESTIONS.length}`;
-    return;
+  async function loadQuestions() {
+    const res = await fetch("questions.json");
+    QUESTIONS = await res.json();
+    showQuestion();
   }
-  const q=QUESTIONS[idx];
-  const qt=document.createElement("div");
-  qt.className="question-text"; qt.innerText=q.question;
-  area.appendChild(qt);
-  const opts=document.createElement("div"); opts.className="options";
-  q.options.forEach((opt,i)=>{
-    const el=document.createElement("div"); el.className="opt"; el.innerText=opt;
-    el.onclick=()=>selectOption(i);
-    opts.appendChild(el);
-  });
-  area.appendChild(opts);
-  answered=false;
-}
 
-// Обработка ответа
-function selectOption(i){
-  if(answered) return; answered=true;
-  const q=QUESTIONS[idx];
-  const opts=document.querySelectorAll(".opt");
-  opts.forEach((el,j)=>{
-    if(j===q.correct) el.classList.add("correct");
-    if(j===i && i!==q.correct) el.classList.add("wrong");
-  });
-  if(i===q.correct) score++;
-}
+  function showQuestion() {
+    if (currentQuestion >= QUESTIONS.length) {
+      endGame();
+      return;
+    }
+    const q = QUESTIONS[currentQuestion];
+    quizEl.innerHTML = `
+      <h3>${q.question}</h3>
+      <ul>
+        ${q.answers.map((a,i)=>`<li><button onclick="checkAnswer(${i})">${a}</button></li>`).join("")}
+      </ul>
+    `;
+  }
 
-// Кнопки
-document.getElementById("nextBtn").onclick=()=>{ if(answered){ idx++; renderQuestion(); } };
-document.getElementById("restartBtn").onclick=()=>{ idx=0; score=0; renderQuestion(); document.getElementById("game").style.display="block"; document.getElementById("finishForm").style.display="none"; };
+  function checkAnswer(i) {
+    const q = QUESTIONS[currentQuestion];
+    if (i === q.correct) score++;
+    currentQuestion++;
+    nextBtn.style.display = "inline-block";
+  }
 
-// ------------------- ЛИДЕРЫ -------------------
-async function loadLeaders(){
-  try{
-    const res=await fetch("https://anime-quiz-backend-2ien.onrender.com");
-    const data=await res.json();
-    const list=document.getElementById("leadersList"); list.innerHTML="";
-    data.forEach((row,i)=>{
-      const li=document.createElement("li");
-      li.innerText=`${i+1}. ${row.name} — ${row.score}/${row.total}`;
-      list.appendChild(li);
-    });
-  }catch(e){ console.error(e); }
-}
+  nextBtn.onclick = () => {
+    nextBtn.style.display = "none";
+    showQuestion();
+  };
 
-async function submitScore(){
-  const name=document.getElementById("playerName").value||"Аноним";
-  try{
-    await fetch("https://anime-quiz-backend-2ien.onrender.com",{
+  async function endGame() {
+    quizEl.innerHTML = "";
+    resultEl.innerHTML = `Вы набрали ${score} из ${QUESTIONS.length}`;
+    nextBtn.style.display = "none";
+
+    const tg = window.Telegram.WebApp;
+    const user = tg.initDataUnsafe?.user || {};
+    playerName = user.first_name || "Pirate";
+    const photo = user.photo_url || null;
+
+    await fetch("https://anime-quiz-backend-2ien.onrender.com", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({name,score,total:QUESTIONS.length})
+      body: JSON.stringify({name: playerName, score, total: QUESTIONS.length})
     });
-    loadLeaders();
-    alert("Результат отправлен!");
-  }catch(e){ alert("Ошибка отправки"); }
-}
 
-// ------------------- СТАРТ -------------------
-loadQuestions();
-loadLeaders();
-</script>
+    loadLeaders();
+
+    // вызов генерации постера из poster.js
+    document.getElementById("posterBtn").style.display = "inline-block";
+    generatePoster(playerName, photo, score);
+  }
+
+  async function loadLeaders(){
+    try {
+      const res = await fetch("https://anime-quiz-backend-2ien.onrender.com");
+      const leaders = await res.json();
+      const body = document.getElementById("leadersBody");
+      body.innerHTML = "";
+      leaders.forEach((row,i)=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${i+1}</td><td>${row.name}</td><td>${row.score}/${row.total}</td>`;
+        body.appendChild(tr);
+      });
+    } catch(e) {
+      console.error("Ошибка загрузки лидеров", e);
+    }
+  }
+
+  loadQuestions();
+  loadLeaders();
+  </script>
 </body>
 </html>
