@@ -1,223 +1,270 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🎌 Аниме Викторина</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="/style.css">
-  <style>
-    #posterCanvas {
-      max-width: 90%;
-      height: auto;
-      display: none;
-      margin: 10px auto;
-    }
-    @media (max-width: 600px) {
-      #posterCanvas {
-        max-width: 80%;
-      }
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Аниме Викторина</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="quiz-container" id="quizContainer">
-    <div class="question" id="question"></div>
-    <div class="options" id="options"></div>
-    <div class="result" id="result"></div>
-    <button id="nextBtn" style="display: none;">Следующий</button>
-    <button id="resetBtn" style="display: none;">Сбросить</button>
+<div class="app">
+  <h1>🎌 Аниме Викторина</h1>
+
+  <div id="game" class="card">
+    <div id="question-area"></div>
+    <div style="margin-top:12px;">
+      <button id="nextBtn" class="btn-main">Следующий</button>
+      <button id="restartBtn" class="btn-sec">Сбросить</button>
+    </div>
   </div>
 
-  <div class="result-container" id="resultContainer" style="display: none;">
-    <h2>🎉 Игра окончена!</h2>
-    <p>Ты набрал <span id="score"></span> очков.</p>
-    <button id="sendResultBtn">Отправить результат</button>
-    <button id="generatePosterBtn">Получить постер</button>
-    <canvas id="posterCanvas"></canvas>
+  <div id="finishForm" class="card" style="display:none;">
+    <h3>🎉 Игра окончена!</h3>
+    <p>Ты набрал <span id="finalScore"></span> очков.</p>
+    <input type="text" id="playerName" placeholder="Твой ник">
+    <button id="sendScoreBtn" class="btn-main">Отправить результат</button>
+
+    <!-- Кнопка генерации/скачивания постера -->
+    <div style="margin-top:12px;">
+      <button id="posterBtn" class="btn-main" style="display:none;">Получить постер</button>
+    </div>
   </div>
 
-  <div class="leaderboard-container" id="leaderboardContainer" style="display: none;">
-    <h2>🏆 Лидеры</h2>
-    <div id="leaderboard">Загрузка...</div>
+  <div id="leaderboard" class="card">
+    <h3>🏆 Лидеры</h3>
+    <ol id="leadersList"><li>Загрузка...</li></ol>
   </div>
 
-  <script>
-    let questions = [];
-    let currentQuestion = 0;
-    let score = 0;
+  <!-- Canvas для постера (по умолчанию скрыт) -->
+  <canvas id="posterCanvas" width="640" height="960" style="display:none; margin-top:12px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35);"></canvas>
+</div>
 
-    // Загрузка вопросов из questions.json
-    fetch('/questions.json')
-      .then(response => {
-        if (!response.ok) throw new Error(`Не удалось загрузить questions.json: ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        questions = data;
-        loadQuestion();
-      })
-      .catch(error => {
-        console.error('Ошибка загрузки вопросов:', error);
-        document.getElementById('question').innerText = 'Ошибка загрузки вопросов';
-      });
+<script>
+let QUESTIONS = [];
+let idx=0, score=0, answered=false;
 
-    function loadQuestion() {
-      if (questions.length === 0) {
-        document.getElementById('question').innerText = 'Вопросы не загружены';
-        return;
-      }
-      const q = questions[currentQuestion];
-      document.getElementById('question').innerText = q.question;
-      const optionsDiv = document.getElementById('options');
-      optionsDiv.innerHTML = '';
-      q.options.forEach((option, index) => {
-        const optionEl = document.createElement('div');
-        optionEl.className = 'option';
-        optionEl.innerText = option;
-        optionEl.onclick = () => checkAnswer(index);
-        optionsDiv.appendChild(optionEl);
-      });
-      document.getElementById('result').innerText = '';
-      document.getElementById('nextBtn').style.display = 'none';
-      document.getElementById('resetBtn').style.display = 'none';
+// Загружаем вопросы из JSON
+async function loadQuestions(){
+  try {
+    const res = await fetch("questions.json");
+    QUESTIONS = await res.json();
+    renderQuestion();
+  } catch(e) {
+    console.error("Ошибка загрузки questions.json:", e);
+    document.getElementById("question-area").innerHTML = "<p>Ошибка загрузки вопросов.</p>";
+  }
+}
+
+// Рендерим вопрос
+function renderQuestion(){
+  const area=document.getElementById("question-area");
+  area.innerHTML="";
+  if(idx>=QUESTIONS.length){
+    document.getElementById("game").style.display="none";
+    document.getElementById("finishForm").style.display="block";
+    document.getElementById("finalScore").innerText=`${score}/${QUESTIONS.length}`;
+    return;
+  }
+  const q=QUESTIONS[idx];
+  const qt=document.createElement("div");
+  qt.className="question-text"; qt.innerText=q.question;
+  area.appendChild(qt);
+  const opts=document.createElement("div"); opts.className="options";
+  q.options.forEach((opt,i)=>{
+    const el=document.createElement("div"); el.className="opt"; el.innerText=opt;
+    el.onclick=()=>selectOption(i);
+    opts.appendChild(el);
+  });
+  area.appendChild(opts);
+  answered=false;
+}
+
+// Обработка ответа
+function selectOption(i){
+  if(answered) return; answered=true;
+  const q=QUESTIONS[idx];
+  const opts=document.querySelectorAll(".opt");
+  opts.forEach((el,j)=>{
+    if(j===q.correct) el.classList.add("correct");
+    if(j===i && i!==q.correct) el.classList.add("wrong");
+  });
+  if(i===q.correct) score++;
+}
+
+// Кнопки
+document.getElementById("nextBtn").onclick=()=>{ if(answered){ idx++; renderQuestion(); } };
+document.getElementById("restartBtn").onclick=()=>{ idx=0; score=0; renderQuestion(); document.getElementById("game").style.display="block"; document.getElementById("finishForm").style.display="none"; };
+
+// ------------------- ЛИДЕРЫ -------------------
+async function loadLeaders(){
+  try{
+    const res=await fetch("https://anime-quiz-backend-2ien.onrender.com");
+    const data=await res.json();
+    const list=document.getElementById("leadersList"); list.innerHTML="";
+    if(!Array.isArray(data) || data.length===0){
+      list.innerHTML = "<li>Пока нет результатов</li>";
+      return;
     }
+    data.forEach((row,i)=>{
+      const li=document.createElement("li");
+      li.innerText=`${i+1}. ${row.name} — ${row.score}/${row.total}`;
+      list.appendChild(li);
+    });
+  }catch(e){ console.error("Ошибка загрузки лидеров:", e); document.getElementById("leadersList").innerHTML = "<li>Ошибка загрузки</li>"; }
+}
 
-    function checkAnswer(selected) {
-      const q = questions[currentQuestion];
-      const resultDiv = document.getElementById('result');
-      if (selected === q.correct) {
-        resultDiv.innerText = 'Правильно!';
-        score++;
-      } else {
-        resultDiv.innerText = `Неправильно! Правильный ответ: ${q.options[q.correct]}`;
-      }
-      document.getElementById('nextBtn').style.display = 'block';
-      document.querySelectorAll('.option').forEach(opt => opt.style.pointerEvents = 'none');
+async function submitScore(){
+  const nameInput = document.getElementById("playerName").value;
+  const name = nameInput && nameInput.trim() ? nameInput.trim() : "Аноним";
+  try{
+    await fetch("https://anime-quiz-backend-2ien.onrender.com",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,score,total:QUESTIONS.length})
+    });
+    await loadLeaders();
+    alert("Результат отправлен!");
+
+    // После успешной отправки — пробуем получить аватар из Telegram (если игра в WebApp)
+    let tgPhoto = null;
+    try {
+      tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || null;
+    } catch(e){ tgPhoto = null; }
+
+    // генерация постера (и отображение кнопки для скачивания)
+    generatePoster(name, tgPhoto, score);
+  }catch(e){
+    console.error(e);
+    alert("Ошибка отправки");
+  }
+}
+
+// повесим кнопку отправки (чтобы input работал)
+document.getElementById("sendScoreBtn").addEventListener("click", submitScore);
+
+// ------------------- POSTER (Canvas) -------------------
+// helper: загрузка изображения (crossOrigin)
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = src;
+  });
+}
+
+/*
+  generatePoster(name, photoUrl, score)
+  - name: строка
+  - photoUrl: ссылка на аватарку (или null)
+  - score: целое число
+*/
+async function generatePoster(name, photoUrl, score){
+  const canvas = document.getElementById("posterCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Очистим холст
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Шаблон постера (положи wanted_template.png рядом с index.html)
+  let bg;
+  try {
+    bg = await loadImage("wanted_template.png");
+  } catch(e){
+    console.warn("Шаблон постера не найден или не доступен:", e);
+    // если нет шаблона - просто заполним фон
+    ctx.fillStyle = "#e9d6b7";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  if(bg) ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+
+  // Координаты и размер для аватарки
+  const avatarX = 170;
+  const avatarY = 210;
+  const avatarSize = 300;
+  // Рисуем аватар в круглой маске
+  try {
+    const avatarSrc = photoUrl || "https://i.ibb.co/7n5T8Ns/avatar-placeholder.png";
+    const avatarImg = await loadImage(avatarSrc);
+
+    // Обрезаем / вписываем аватар в круг
+    const cx = avatarX + avatarSize/2;
+    const cy = avatarY + avatarSize/2;
+    const r = avatarSize/2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    // подогнать соотношение сторон: центрируем изображение
+    // Вычислим масштаб и смещение, чтобы заполнить квадрат avatarSize
+    const ar = avatarImg.width / avatarImg.height;
+    let dw = avatarSize, dh = avatarSize, sx = 0, sy = 0, sw = avatarImg.width, sh = avatarImg.height;
+    if(ar > 1){
+      // шире, чем высокий: обрезаем по бокам
+      sh = avatarImg.height;
+      sw = avatarImg.height * ar;
+      // center crop horizontally
+      sx = (avatarImg.width - avatarImg.height * ar) / 2;
+    } else if(ar < 1){
+      // выше, чем широкий: обрезаем по вертикали
+      sw = avatarImg.width;
+      sh = avatarImg.width / ar;
+      sy = (avatarImg.height - avatarImg.width / ar) / 2;
     }
-
-    document.getElementById('nextBtn').onclick = () => {
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        loadQuestion();
-      } else {
-        showResult();
-      }
-    };
-
-    document.getElementById('resetBtn').onclick = () => {
-      currentQuestion = 0;
-      score = 0;
-      document.getElementById('quizContainer').style.display = 'block';
-      document.getElementById('resultContainer').style.display = 'none';
-      document.getElementById('leaderboardContainer').style.display = 'none';
-      loadQuestion();
-    };
-
-    document.getElementById('sendResultBtn').onclick = () => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.sendData(JSON.stringify({ score, total: questions.length }));
-      }
-    };
-
-    document.getElementById('generatePosterBtn').onclick = () => {
-      generatePoster();
-    };
-
-    async function generatePoster() {
-      const canvas = document.getElementById('posterCanvas');
-      const ctx = canvas.getContext('2d');
-
-      // Установить размеры постера
-      canvas.width = 400;
-      canvas.height = 600;
-
-      // Загрузка шаблона постера из корневой папки
-      const templateImg = new Image();
-      templateImg.crossOrigin = 'anonymous';
-      templateImg.src = '/poster_template.png';
-
-      templateImg.onload = async () => {
-        // Отрисовка шаблона
-        ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
-
-        // Добавление текста результата
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#000';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Твой результат: ${score} из ${questions.length}`, canvas.width / 2, 80);
-
-        // Добавление имени пользователя
-        const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Игрок';
-        ctx.font = '18px Arial';
-        ctx.fillText(`@${username}`, canvas.width / 2, 120);
-
-        // Загрузка аватара пользователя
-        if (window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url) {
-          const avatarImg = new Image();
-          avatarImg.crossOrigin = 'anonymous';
-          avatarImg.src = window.Telegram.WebApp.initDataUnsafe.user.photo_url;
-          avatarImg.onload = () => {
-            ctx.beginPath();
-            ctx.arc(80, 80, 40, 0, Math.PI * 2); // Круглый аватар
-            ctx.clip();
-            ctx.drawImage(avatarImg, 40, 40, 80, 80);
-            ctx.restore();
-            finalizePoster();
-          };
-          avatarImg.onerror = () => {
-            console.warn('Не удалось загрузить аватар');
-            finalizePoster();
-          };
-        } else {
-          finalizePoster();
-        }
-      };
-
-      templateImg.onerror = () => {
-        console.error('Ошибка загрузки шаблона постера');
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Шаблон не загружен', canvas.width / 2, canvas.height / 2);
-        finalizePoster();
-      };
-
-      function finalizePoster() {
-        // Показать постер
-        document.getElementById('posterCanvas').style.display = 'block';
-        // Удалить старую кнопку скачивания, если есть
-        const existingDownloadBtn = document.querySelector('#resultContainer a');
-        if (existingDownloadBtn) existingDownloadBtn.remove();
-        // Создать новую кнопку скачивания
-        const downloadBtn = document.createElement('a');
-        downloadBtn.href = canvas.toDataURL('image/png');
-        downloadBtn.download = 'anime_quiz_poster.png';
-        downloadBtn.innerText = 'Скачать постер';
-        downloadBtn.style = 'display: block; margin: 10px auto; padding: 10px; background: #1e90ff; color: white; text-decoration: none; border-radius: 5px;';
-        document.getElementById('resultContainer').appendChild(downloadBtn);
-      }
+    // Нативная drawImage с обрезкой (пытаться избежать искажений)
+    // Если crop параметры не корректны, fallback на простой drawImage
+    try {
+      ctx.drawImage(avatarImg, sx, sy, sw, sh, avatarX, avatarY, avatarSize, avatarSize);
+    } catch(e) {
+      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
     }
+    ctx.restore();
+  } catch(e){
+    console.warn("Не удалось загрузить аватарку:", e);
+    // ничего страшного — шаблон содержит силуэт
+  }
 
-    function showResult() {
-      document.getElementById('quizContainer').style.display = 'none';
-      document.getElementById('resultContainer').style.display = 'block';
-      document.getElementById('score').innerText = score;
-      document.getElementById('resetBtn').style.display = 'block';
+  // Текст имени
+  ctx.fillStyle = "#111"; // тёмный текст поверх пергамента
+  ctx.font = "bold 36px serif";
+  ctx.textAlign = "center";
+  // подстраиваем размер шрифта при длинном имени
+  let displayName = name || "Аноним";
+  if(displayName.length > 18){
+    ctx.font = "bold 28px serif";
+  }
+  ctx.fillText(displayName, canvas.width/2, 560);
+
+  // Награда (примерная формула)
+  const reward = Math.max(10000, score * 10000); // минимум 10k
+  ctx.font = "bold 34px serif";
+  ctx.fillText(reward.toLocaleString() + " Berries", canvas.width/2, 660);
+
+  // Показываем canvas и кнопку скачивания
+  canvas.style.display = "block";
+  const posterBtn = document.getElementById("posterBtn");
+  posterBtn.style.display = "inline-block";
+  posterBtn.onclick = () => {
+    try {
+      // Скачать изображение
+      const link = document.createElement("a");
+      link.download = `${displayName.replace(/\s+/g,'_')}_wanted.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch(err) {
+      // Если canvas "запятнан" (CORS), сообщаем об этом
+      console.error("Ошибка при экспорте постера:", err);
+      alert("Не удалось скачать постер — возможно, аватарка не позволяет скачивание из-за CORS.");
     }
+  };
+}
 
-    window.onload = () => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-        window.Telegram.WebApp.setViewportHeight(window.innerHeight);
-      }
-      loadQuestion();
-    };
-  </script>
+// ------------------- СТАРТ -------------------
+loadQuestions();
+loadLeaders();
+</script>
 </body>
 </html>
-```
