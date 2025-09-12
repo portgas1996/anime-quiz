@@ -9,16 +9,16 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <link rel="stylesheet" href="/style.css">
   <style>
-    /* Дополнительные стили для предотвращения обрезки */
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       min-height: 100vh;
       overflow-y: auto;
+      box-sizing: border-box;
     }
     #posterCanvas {
-      max-width: 100%;
+      max-width: 90%;
       height: auto;
       display: none;
       margin: 10px auto;
@@ -59,7 +59,10 @@
 
     // Загрузка вопросов из questions.json
     fetch('/questions.json')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error(`Не удалось загрузить questions.json: ${response.status}`);
+        return response.json();
+      })
       .then(data => {
         questions = data;
         loadQuestion();
@@ -70,7 +73,10 @@
       });
 
     function loadQuestion() {
-      if (questions.length === 0) return;
+      if (questions.length === 0) {
+        document.getElementById('question').innerText = 'Вопросы не загружены';
+        return;
+      }
       const q = questions[currentQuestion];
       document.getElementById('question').innerText = q.question;
       const optionsDiv = document.getElementById('options');
@@ -133,13 +139,13 @@
       const ctx = canvas.getContext('2d');
 
       // Установить размеры постера
-      canvas.width = 400; // Уменьшено для адаптивности
+      canvas.width = 400;
       canvas.height = 600;
 
       // Загрузка шаблона постера
       const templateImg = new Image();
       templateImg.crossOrigin = 'anonymous';
-      templateImg.src = '/images/poster_template.png'; // Укажите правильный путь
+      templateImg.src = '/poster_template.png'; // Шаблон в корневой папке
 
       templateImg.onload = async () => {
         ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
@@ -162,13 +168,16 @@
           avatarImg.src = window.Telegram.WebApp.initDataUnsafe.user.photo_url;
           avatarImg.onload = () => {
             ctx.beginPath();
-            ctx.arc(80, 80, 40, 0, Math.PI * 2); // Круглый аватар
+            ctx.arc(80, 80, 40, 0, Math.PI * 2);
             ctx.clip();
             ctx.drawImage(avatarImg, 40, 40, 80, 80);
             ctx.restore();
             finalizePoster();
           };
-          avatarImg.onerror = () => finalizePoster();
+          avatarImg.onerror = () => {
+            console.warn('Аватар не загружен');
+            finalizePoster();
+          };
         } else {
           finalizePoster();
         }
@@ -186,6 +195,8 @@
 
       function finalizePoster() {
         document.getElementById('posterCanvas').style.display = 'block';
+        const existingDownloadBtn = document.querySelector('#resultContainer a');
+        if (existingDownloadBtn) existingDownloadBtn.remove();
         const downloadBtn = document.createElement('a');
         downloadBtn.href = canvas.toDataURL('image/png');
         downloadBtn.download = 'anime_quiz_poster.png';
