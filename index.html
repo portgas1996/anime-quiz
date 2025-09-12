@@ -3,19 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Викторина по аниме</title>
+  <title>🎌 Аниме Викторина</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <link rel="stylesheet" href="/style.css">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      min-height: 100vh;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
     #posterCanvas {
       max-width: 90%;
       height: auto;
@@ -40,7 +32,7 @@
 
   <div class="result-container" id="resultContainer" style="display: none;">
     <h2>🎉 Игра окончена!</h2>
-    <p>Ты набрал <span id="finalScore"></span> очков.</p>
+    <p>Ты набрал <span id="score"></span> очков.</p>
     <button id="sendResultBtn">Отправить результат</button>
     <button id="generatePosterBtn">Получить постер</button>
     <canvas id="posterCanvas"></canvas>
@@ -141,12 +133,13 @@
       canvas.width = 400;
       canvas.height = 600;
 
-      // Загрузка шаблона постера
+      // Загрузка шаблона постера из корневой папки
       const templateImg = new Image();
       templateImg.crossOrigin = 'anonymous';
-      templateImg.src = '/poster_template.png'; // Шаблон в корневой папке
+      templateImg.src = '/poster_template.png';
 
       templateImg.onload = async () => {
+        // Отрисовка шаблона
         ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
         // Добавление текста результата
@@ -160,21 +153,21 @@
         ctx.font = '18px Arial';
         ctx.fillText(`@${username}`, canvas.width / 2, 120);
 
-        // Загрузка аватара
+        // Загрузка аватара пользователя
         if (window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url) {
           const avatarImg = new Image();
           avatarImg.crossOrigin = 'anonymous';
           avatarImg.src = window.Telegram.WebApp.initDataUnsafe.user.photo_url;
           avatarImg.onload = () => {
             ctx.beginPath();
-            ctx.arc(80, 80, 40, 0, Math.PI * 2);
+            ctx.arc(80, 80, 40, 0, Math.PI * 2); // Круглый аватар
             ctx.clip();
             ctx.drawImage(avatarImg, 40, 40, 80, 80);
             ctx.restore();
             finalizePoster();
           };
           avatarImg.onerror = () => {
-            console.warn('Аватар не загружен');
+            console.warn('Не удалось загрузить аватар');
             finalizePoster();
           };
         } else {
@@ -188,14 +181,18 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#000';
         ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
         ctx.fillText('Шаблон не загружен', canvas.width / 2, canvas.height / 2);
         finalizePoster();
       };
 
       function finalizePoster() {
+        // Показать постер
         document.getElementById('posterCanvas').style.display = 'block';
+        // Удалить старую кнопку скачивания, если есть
         const existingDownloadBtn = document.querySelector('#resultContainer a');
         if (existingDownloadBtn) existingDownloadBtn.remove();
+        // Создать новую кнопку скачивания
         const downloadBtn = document.createElement('a');
         downloadBtn.href = canvas.toDataURL('image/png');
         downloadBtn.download = 'anime_quiz_poster.png';
@@ -205,13 +202,22 @@
       }
     }
 
+    function showResult() {
+      document.getElementById('quizContainer').style.display = 'none';
+      document.getElementById('resultContainer').style.display = 'block';
+      document.getElementById('score').innerText = score;
+      document.getElementById('resetBtn').style.display = 'block';
+    }
+
     window.onload = () => {
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
         window.Telegram.WebApp.setViewportHeight(window.innerHeight);
       }
+      loadQuestion();
     };
   </script>
 </body>
 </html>
+```
