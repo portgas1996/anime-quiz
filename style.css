@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #1f2937; /* тёмный фон */
+  color: white;
+}
+
+.app {
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #374151;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+h1 {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.question-text {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.opt {
+  background: #4b5563;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.opt:hover {
+  background: #6b7280;
+}
+
+.opt.correct {
+  background: rgba(0, 200, 100, 0.6);
+}
+
+.opt.wrong {
+  background: rgba(200, 0, 0, 0.6);
+}
+
+button {
+  cursor: pointer;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  margin: 4px;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.btn-main {
+  background: #facc15;
+  color: black;
+}
+
+.btn-sec {
+  background: #6b7280;
+  color: white;
+}
+
+#leaderboard {
+  margin-top: 20px;
+}
+
+#leadersList {
+  padding-left: 20px;
+}
+
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  margin: 8px 0;
+  width: 60%;
+}
